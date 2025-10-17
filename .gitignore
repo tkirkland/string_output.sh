@@ -1,0 +1,9 @@
+# Serena MCP configuration (local development tool)
+.serena/
+
+# Editor and IDE files
+*~
+*.swp
+*.swo
+.vscode/
+.DS_Store
