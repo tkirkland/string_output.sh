@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-
-#!/bin/bash
 # shellcheck disable=SC2034
 # shellcheck shell=bash
 # =============================================================================
@@ -132,7 +130,7 @@ process_newlines() {
 #   0 - Success
 # Example:
 #   wrap_text "This is a long line that needs wrapping" 4 40
-#   wrap_text "Prefix: long text..." 8 79 1  # First line no indent
+#   wrap_text "Prefix: long text..." 8 79 1 # First line no indent
 #######################################
 wrap_text() {
   local text="$1"
@@ -159,7 +157,7 @@ wrap_text() {
   mapfile -t lines <<< "$text"
 
   for input_line in "${lines[@]}"; do
-    # Preserve empty lines in output
+    # Preserve empty lines in the output
     if [[ -z $input_line ]]; then
       result+=$'\n'
       is_first_line=0
@@ -174,14 +172,14 @@ wrap_text() {
     local current_indent=""
     if [[ $skip_first -eq 1 ]] && [[ $is_first_line -eq 1 ]]; then
       current_indent=""
-      # First line uses full width
+      # The first line uses full width
       line_width=$((max_width))
     else
       current_indent="$indent_str"
       line_width=$((max_width - indent))
     fi
 
-    # If line fits within width, no wrapping needed
+    # If the line fits within width, no wrapping needed
     if [[ ${#clean_line} -le $line_width ]]; then
       result+="$current_indent$input_line"$'\n'
       is_first_line=0
@@ -204,7 +202,7 @@ wrap_text() {
       fi
 
       if [[ ${#test_line} -le $line_width ]]; then
-        # Word fits, add it to current line
+        # Word fits, add it to the current line
         if [[ -z $line ]]; then
           line="$word"
         else
@@ -254,7 +252,7 @@ wrap_text() {
 # Returns:
 #   0 - Success
 # Example:
-#   truncate_text "This is a very long line" 10  # Output: "This is..."
+#   truncate_text "This is a very long line" 10 # Output: "This is..."
 #######################################
 truncate_text() {
   local text="$1"
@@ -284,7 +282,7 @@ truncate_text() {
 # Returns:
 #   0 - Success
 # Example:
-#   align_text "Title" "center" 40  # Centers "Title" in 40 chars
+#   align_text "Title" "center" 40 # Centers "Title" in 40 chars
 #######################################
 align_text() {
   local text="$1"
@@ -306,7 +304,7 @@ align_text() {
       fi
       ;;
     right)
-      # Calculate padding for right alignment
+      # Calculate padding for the right alignment
       padding=$((width - text_len))
       if [[ $padding -gt 0 ]]; then
         printf "%${padding}s%s" "" "$text"
@@ -326,7 +324,7 @@ align_text() {
 # -----------------------------------------------------------------------------
 
 #######################################
-# Main output function with comprehensive formatting options
+# The main output function with comprehensive formatting options
 # Provides a unified interface for all text output with support for
 # colors, styles, levels (info/success/warning/error/internal),
 # timestamps, wrapping, truncation, alignment, and file logging.
@@ -365,11 +363,11 @@ align_text() {
 # Examples:
 #   output_text -l info "Starting process..."
 #   output_text -l error "Failed to connect" >&2
-#   output_text -P -l success "Done"  # Colored prefix only
+#   output_text -P -l success "Done" # Colored prefix only
 #   output_text -w -W 60 "Long text that needs wrapping..."
-#   output_text -t -l internal "Cleanup completed"  # With timestamp
+#   output_text -t -l internal "Cleanup completed" # With timestamp
 #   output_text -P -w -l warning "Long message..."  # Auto-indent continuation
-#   # Output: [WARNING] Long message that wraps with
+#   # Output: [WARNING] A long message that wraps with
 #   #                   continuation lines aligned
 #######################################
 output_text() {
@@ -543,7 +541,7 @@ done
       # Auto-calculate indent for wrapping if -P and -w are both active
       # This ensures continuation lines align with the message content
       if [[ $wrap -eq 1 ]] && [[ $indent -eq 0 ]]; then
-        # Calculate visual width: prefix + space after it
+        # Calculate visual width: prefix chars + and space after it
         local clean_prefix
         clean_prefix=$(strip_ansi "$prefix")
         indent=$((${#clean_prefix} + 1))
@@ -554,9 +552,9 @@ done
     fi
   fi
 
-  # Apply text transformations after prefix is added
+  # Apply text transformations after the prefix is added
   if [[ $wrap -eq 1 ]]; then
-    # For -P -w combination, skip indent on first line (prefix is already there)
+    # For -P -w combination, skip indent on the first line (prefix is already there)
     local skip_first_indent=0
     if [[ $prefix_color_only -eq 1 ]] && [[ $indent -gt 0 ]]; then
       skip_first_indent=1
@@ -572,10 +570,10 @@ done
 
   # Build final output
   if [[ $prefix_color_only -eq 1 ]]; then
-    # Prefix already colored, just output the text
+    # Prefix is already colored, output the text
     output="${text}"
   else
-    # Apply color to entire output (original behavior)
+    # Apply color to the entire output (original behavior)
     output="${style_code}${color_code}${text}${TH_RESET}"
   fi
 
@@ -608,11 +606,11 @@ done
 #######################################
 # Output informational message
 # Convenience wrapper for output_text with info level.
-# Displays message with [INFO] prefix in blue color.
+# Displays the message with the [INFO] prefix in blue color.
 # Arguments:
 #   $@ - Message text and any output_text options
 # Outputs:
-#   Formatted info message to stdout
+#   Formatted the info message to stdout
 # Returns:
 #   0 - Success
 # Example:
@@ -623,7 +621,7 @@ output_info() { output_text -l info "$@"; }
 #######################################
 # Output success message
 # Convenience wrapper for output_text with success level.
-# Displays message with [SUCCESS] prefix in green color.
+# Displays the message with [SUCCESS] prefix in green color.
 # Arguments:
 #   $@ - Message text and any output_text options
 # Outputs:
@@ -638,7 +636,7 @@ output_success() { output_text -l success "$@"; }
 #######################################
 # Output warning message
 # Convenience wrapper for output_text with warning level.
-# Displays message with [WARNING] prefix in yellow color.
+# Displays the message with [WARNING] prefix in yellow color.
 # Arguments:
 #   $@ - Message text and any output_text options
 # Outputs:
@@ -653,7 +651,7 @@ output_warning() { output_text -l warning "$@"; }
 #######################################
 # Output error message
 # Convenience wrapper for output_text with error level.
-# Displays message with [ERROR] prefix in red color to stderr.
+# Displays the message with [ERROR] prefix in red color to stderr.
 # Arguments:
 #   $@ - Message text and any output_text options
 # Outputs:
@@ -668,7 +666,7 @@ output_error() { output_text -l error "$@" >&2; }
 #######################################
 # Internal logging with full timestamp
 # For trap handlers, cleanup routines, and system-level debugging.
-# Uses full timestamp format [YYYY-MM-DD HH:MM:SS] and no color
+# Uses a full timestamp format [YYYY-MM-DD HH:MM:SS] and no color
 # for maximum reliability in error conditions and log files.
 # Arguments:
 #   $@ - Error message text
@@ -701,9 +699,10 @@ output_internal() { output_text -l internal "$@" >&2; }
 #   0 - Success
 # Example:
 #   output_box "Important Notice" 50
-#   # ┌──────────────────────────────────────────────────┐
-#   # │            Important Notice                      │
-#   # └──────────────────────────────────────────────────┘
+#    ┌──────────────────────────────────────────────────┐
+#    │            Important Notice                      │
+#    └──────────────────────────────────────────────────┘
+#     (relies on monospaced font)
 #######################################
 output_box() {
   local text="$1"
@@ -736,7 +735,7 @@ output_box() {
 #######################################
 # Output a formatted section header
 # Creates a decorative header with cyan bold text inside a box,
-# with blank lines above and below for visual separation.
+# with the blank lines above and below for visual separation.
 # Globals:
 #   TH_BOLD, TH_CYAN, TH_RESET
 # Arguments:
@@ -784,7 +783,7 @@ output_separator() {
 #######################################
 # Indent text by specified spaces
 # Adds indentation to every line of the provided text.
-# Processes embedded \n sequences and preserves empty lines.
+# Processes embedded \n sequences and empty lines are preserved.
 # Arguments:
 #   $1 - Text to indent (may contain \n sequences)
 #   $2 - Indentation width in spaces (default: 4)
@@ -820,7 +819,7 @@ output_indent() {
 #######################################
 # Interactive confirmation prompt
 # Displays a yes/no prompt and waits for user input.
-# Supports default values indicated by uppercase letter in prompt.
+# Supports default values indicated by an uppercase letter in prompt.
 # Empty input (just pressing Enter) uses the default value.
 # Arguments:
 #   $1 - Prompt text
@@ -834,7 +833,7 @@ output_indent() {
 #   if output_confirm "Delete all files?" "n"; then
 #     echo "Deleting..."
 #   else
-#     echo "Cancelled"
+#     echo "Canceled"
 #   fi
 #######################################
 output_confirm() {
@@ -842,7 +841,7 @@ output_confirm() {
   local default="${2:-n}"
   local response
 
-  # Display prompt with appropriate default indicator
+  # Display prompt with the appropriate default indicator
   if [[ $default == "y" ]]; then
     output_text -c yellow -n "$prompt [Y/n] "
   else
@@ -851,7 +850,7 @@ output_confirm() {
 
   # Read user input
   read -r response
-  # Use default if user just pressed Enter
+  # Use default if the user just pressed Enter
   response="${response:-$default}"
 
   # Check response (case-insensitive)
@@ -871,12 +870,12 @@ output_confirm() {
 # Automatically clears the spinner when the process completes.
 # Uses Unicode Braille pattern characters for smooth animation.
 # Arguments:
-#   $1 - PID of background process to monitor
+#   $1 - PID of the background process to monitor
 #   $2 - Message to display next to spinner (default: "Working")
 # Outputs:
-#   Animated spinner with message, updated every 0.1 seconds
+#   Animated spinner with the message, updated every 0.1 seconds
 # Returns:
-#   0 - When process completes
+#   0 - When the process completes
 # Example:
 #   long_process &
 #   output_spinner $! "Processing files"
@@ -890,7 +889,7 @@ output_spinner() {
   local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
   local i=0
 
-  # Loop while process is running
+  # Loop while the process is running
   while kill -0 "$pid" 2> /dev/null; do
     i=$(((i + 1) % ${#spin}))
     output_text -c cyan -n $'\r'"${spin:i:1} $message"
@@ -904,9 +903,9 @@ output_spinner() {
 
 #######################################
 # Progress bar with percentage
-# Displays a visual progress bar showing completion percentage.
+# Displays a visual progress bar showing the completion percentage.
 # Updates in place by overwriting the current line with \r.
-# Automatically adds newline when progress reaches 100%.
+# Automatically adds a newline when progress reaches 100%.
 # Arguments:
 #   $1 - Current progress value
 #   $2 - Total/maximum value
@@ -941,7 +940,7 @@ output_progress() {
   fi
   printf "] %3d%%" "$percentage"
 
-  # Add newline when complete
+  # Add a newline when complete
   if [[ $current -eq $total ]]; then
     echo ""
   fi
@@ -954,7 +953,7 @@ output_progress() {
 #######################################
 # Output a formatted table with borders
 # Creates a table with Unicode box-drawing characters.
-# First row is treated as header with separator line after it.
+# The first row is treated as the header with a separator line after it.
 # Columns are pipe-delimited (|). Column widths auto-adjust to
 # fit the widest content in each column. ANSI codes supported.
 # Globals:
@@ -970,10 +969,10 @@ output_progress() {
 #     "Name|Age|City" \
 #     "Alice|30|NYC" \
 #     "Bob|25|LA"
-#   # │ Name  │ Age │ City │
-#   # ├───────┼─────┼──────┤
-#   # │ Alice │ 30  │ NYC  │
-#   # │ Bob   │ 25  │ LA   │
+#    │ Name  │ Age │ City │
+#    ├───────┼─────┼──────┤
+#    │ Alice │ 30  │ NYC  │
+#    │ Bob   │ 25  │ LA   │
 #######################################
 output_table() {
   local -a rows=("$@")
@@ -990,7 +989,7 @@ output_table() {
       # Strip ANSI codes for accurate width calculation
       clean_col=$(strip_ansi "${cols[$i]}")
       local len=${#clean_col}
-      # Track maximum width for each column
+      # Track the maximum width for each column
       if [[ -z ${col_widths[$i]:-} ]] || [[ $len -gt ${col_widths[$i]:-0} ]]; then
         col_widths[i]=$len
       fi
@@ -1105,7 +1104,7 @@ _init_text_handler() {
   if [[ -t 1 ]] && command -v tput > /dev/null 2>&1; then
     local colors
     colors=$(tput colors 2> /dev/null || echo 0)
-    # Enable color if terminal supports at least 8 colors
+    # Enable color if the terminal supports at least 8 colors
     if [[ $colors -ge 8 ]]; then
       th_use_color=1
     else
