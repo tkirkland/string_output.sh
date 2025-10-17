@@ -991,7 +991,7 @@ output_table() {
       clean_col=$(strip_ansi "${cols[$i]}")
       local len=${#clean_col}
       # Track maximum width for each column
-      if [[ -z ${col_widths[$i]} ]] || [[ $len -gt ${col_widths[$i]} ]]; then
+      if [[ -z ${col_widths[$i]:-} ]] || [[ $len -gt ${col_widths[$i]:-0} ]]; then
         col_widths[i]=$len
       fi
     done
