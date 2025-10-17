@@ -4,6 +4,8 @@ A comprehensive Bash output library for text formatting, colors, and display.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Bash](https://img.shields.io/badge/Bash-4.0%2B-green.svg)](https://www.gnu.org/software/bash/)
+[![CI](https://github.com/tkirkland/string_output.sh/workflows/CI/badge.svg)](https://github.com/tkirkland/string_output.sh/actions/workflows/ci.yml)
+[![Release](https://github.com/tkirkland/string_output.sh/workflows/Release/badge.svg)](https://github.com/tkirkland/string_output.sh/actions/workflows/release.yml)
 
 ## Features
 

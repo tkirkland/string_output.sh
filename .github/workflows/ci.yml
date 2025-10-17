@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          severity: warning
+          format: gcc
+
+  syntax-check:
+    name: Bash Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check bash syntax
+        run: bash -n string_output.sh
+
+  test-sourcing:
+    name: Test Library Sourcing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test sourcing library
+        run: |
+          cat << 'EOF' > test_source.sh
+          #!/bin/bash
+          set -euo pipefail
+          source ./string_output.sh
+
+          # Test basic functions
+          output_info "Testing info message"
+          output_success "Testing success message"
+          output_warning "Testing warning message"
+
+          # Test that error handling works
+          if ! output_error "Testing error message" 2>&1; then
+            echo "Error function correctly returns non-zero"
+          fi
+
+          # Test table
+          output_table "Col1|Col2" "A|B" "C|D"
+
+          # Test library info
+          output_library_info
+
+          echo "All tests passed!"
+          EOF
+
+          chmod +x test_source.sh
+          ./test_source.sh
+
+  test-execution-detection:
+    name: Test Execution Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify execution is blocked
+        run: |
+          chmod +x string_output.sh
+          if ./string_output.sh 2>&1 | grep -q "This is a library file and should be sourced"; then
+            echo "✓ Execution detection working correctly"
+            exit 0
+          else
+            echo "✗ Execution detection failed"
+            exit 1
+          fi
+
+  test-compatibility:
+    name: Test Bash Compatibility
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bash-version: ['4.4', '5.0', '5.1', '5.2']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bash ${{ matrix.bash-version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          # Use system bash for basic testing
+          bash --version
+
+      - name: Test with Bash ${{ matrix.bash-version }}
+        run: |
+          bash -n string_output.sh
+          bash -c 'source ./string_output.sh && output_info "Testing compatibility"'

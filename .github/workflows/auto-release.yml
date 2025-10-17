@@ -1,0 +1,80 @@
+name: Auto Release on Version Change
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'string_output.sh'
+
+jobs:
+  check-version:
+    name: Check Version Update
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check.outputs.changed }}
+      new_version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: check
+        run: |
+          # Extract current version from the library
+          CURRENT_VERSION=$(grep -E "^# Text Handler Library v[0-9]+\.[0-9]+\.[0-9]+" string_output.sh | \
+                           sed -E 's/.*v([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
+          echo "Current version: $CURRENT_VERSION"
+
+          # Get previous version if commit exists
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            PREV_VERSION=$(git show HEAD~1:string_output.sh | \
+                          grep -E "^# Text Handler Library v[0-9]+\.[0-9]+\.[0-9]+" | \
+                          sed -E 's/.*v([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+            echo "Previous version: $PREV_VERSION"
+
+            if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
+              echo "changed=true" >> $GITHUB_OUTPUT
+              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+              echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
+            else
+              echo "changed=false" >> $GITHUB_OUTPUT
+              echo "Version unchanged"
+            fi
+          else
+            # First commit, create initial release
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Initial version: $CURRENT_VERSION"
+          fi
+
+  create-tag:
+    name: Create Version Tag
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create and push tag
+        run: |
+          VERSION="${{ needs.check-version.outputs.new_version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create annotated tag
+          git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+          git push origin "v${VERSION}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag created
+        run: |
+          echo "✓ Created tag v${{ needs.check-version.outputs.new_version }}"
+          echo "The release workflow will be triggered automatically"

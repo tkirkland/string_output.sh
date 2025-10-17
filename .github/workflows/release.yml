@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  checks:
+    name: Pre-release Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          severity: warning
+
+      - name: Syntax check
+        run: bash -n string_output.sh
+
+      - name: Test sourcing
+        run: |
+          source ./string_output.sh
+          output_library_info
+
+  create-release:
+    name: Create Release
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          # Extract version section from string_output.sh changelog
+          VERSION="${{ steps.version.outputs.VERSION }}"
+
+          # Get changelog from the library file
+          CHANGELOG=$(sed -n '/# Changelog:/,/# =====/p' string_output.sh | \
+                      sed -n "/v${VERSION}/,/v[0-9]/p" | \
+                      head -n -1 | \
+                      tail -n +2)
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="Release v${VERSION}"
+          fi
+
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Text Handler Library v${{ steps.version.outputs.VERSION }}
+
+            ### Changes
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ### Installation
+
+            ```bash
+            # Download the library
+            curl -O https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.VERSION }}/string_output.sh
+
+            # Or use in your script
+            source string_output.sh
+            ```
+
+            ### Verification
+
+            ```bash
+            # Check syntax
+            bash -n string_output.sh
+
+            # Test sourcing
+            source ./string_output.sh
+            output_library_info
+            ```
+          files: |
+            string_output.sh
+            README.md
+            LICENSE
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Post-release Notification
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Release Summary
+        run: |
+          echo "🎉 Release ${{ github.ref_name }} published successfully!"
+          echo "📦 Assets: string_output.sh, README.md, LICENSE"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
