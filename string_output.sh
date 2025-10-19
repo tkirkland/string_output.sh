@@ -76,7 +76,6 @@ declare -g _th_last_output=""
 # Returns:
 #   0 - Success
 #######################################
-# bashsupport disable=BP2001
 _th_mark_input_context() {
   _th_last_output="input"
 }
@@ -99,7 +98,6 @@ _th_mark_input_context() {
 #   output_context_break              # Force spacing before next notification
 #   output_info "New section begins"
 #######################################
-# bashsupport disable=BP2001
 output_context_break() {
   echo ""
   _th_last_output=""
