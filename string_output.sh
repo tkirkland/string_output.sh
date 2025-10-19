@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034
 # shellcheck shell=bash
 # =============================================================================
-# Text Handler Library v1.1.0
+# Text Handler Library v1.2.0
 # =============================================================================
 # A comprehensive Bash output library for text formatting, colors, and display
 #
@@ -10,6 +10,12 @@
 # License: MIT
 #
 # Changelog:
+#   v1.2.0 (2025-10-19)
+#     - Added smart context-aware spacing for notifications
+#     - Auto-spacing when transitioning between text/input and notifications
+#     - Added _th_mark_input_context() hook for input.sh integration
+#     - Added output_context_break() for manual context breaks
+#     - State tracking via _th_last_output variable
 #   v1.1.0 (2025-10-16)
 #     - Enhanced -P -w combination for professional wrapped output
 #     - Continuation lines now auto-indent under message content
@@ -51,6 +57,58 @@ readonly TH_BOX_L='├'
 readonly TH_BOX_R='┤'
 
 # -----------------------------------------------------------------------------
+# State Tracking for Smart Spacing
+# -----------------------------------------------------------------------------
+
+# Tracks the type of the last output for automatic context-aware spacing
+# Values: "" (unset), "notification", "text", "input"
+declare -g _th_last_output=""
+
+#######################################
+# Mark input context for spacing transitions
+# Called by input.sh when displaying prompts to enable smart spacing
+# before the next notification output. This is an exported hook that
+# input.sh can optionally use if it detects this function exists.
+# Globals:
+#   _th_last_output - Updated to "input"
+# Arguments:
+#   None
+# Returns:
+#   0 - Success
+#######################################
+# bashsupport disable=BP2001
+_th_mark_input_context() {
+  _th_last_output="input"
+}
+
+#######################################
+# Manually trigger a context break
+# Clears the output state to force spacing before the next notification.
+# Useful for explicit visual separations when automatic transitions
+# don't capture the desired behavior.
+# Globals:
+#   _th_last_output - Cleared to empty string
+# Arguments:
+#   None
+# Outputs:
+#   Single blank line
+# Returns:
+#   0 - Success
+# Example:
+#   output_text "Some regular text"
+#   output_context_break              # Force spacing before next notification
+#   output_info "New section begins"
+#######################################
+# bashsupport disable=BP2001
+output_context_break() {
+  echo ""
+  _th_last_output=""
+}
+
+# Export the input context hook so input.sh can find it
+declare -fx _th_mark_input_context 2>/dev/null || true
+
+# -----------------------------------------------------------------------------
 # Utility Functions
 # -----------------------------------------------------------------------------
 
@@ -84,7 +142,7 @@ strip_ansi() {
 #   0 - Success
 #######################################
 get_terminal_width() {
-  local width=80
+  local width
   # Check if stdout is a terminal and tput command exists
   if [[ -t 1 ]] && command -v tput > /dev/null 2>&1; then
     width=$(tput cols 2> /dev/null || echo 80)
@@ -568,6 +626,15 @@ done
     text=$(align_text "$text" "$alignment" "$max_width")
   fi
 
+  # Smart spacing: Add blank line before notifications when context changes
+  # Only applies to notification levels (info, success, warning, error)
+  # Checks if previous output was non-notification (text or input)
+  if [[ -n $level ]] && [[ $level != "internal" ]]; then
+    if [[ -n ${_th_last_output} ]] && [[ ${_th_last_output} != "notification" ]]; then
+      echo ""
+    fi
+  fi
+
   # Build final output
   if [[ $prefix_color_only -eq 1 ]]; then
     # Prefix is already colored, output the text
@@ -593,6 +660,13 @@ done
     else
       printf "%s\n" "$clean_output" >> "$log_file"
     fi
+  fi
+
+  # Update state tracking based on an output type
+  if [[ -n $level ]] && [[ $level != "internal" ]]; then
+    _th_last_output="notification"
+  else
+    _th_last_output="text"
   fi
 
   [[ $level == "error" ]] && return 1
